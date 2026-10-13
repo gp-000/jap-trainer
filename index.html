@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Japanisch-Trainer</title>
+<meta name="theme-color" content="#0f6b63">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Japanisch">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Japanisch-Trainer</h1>
+    <p class="sub">Vokabeln und Grammatik üben, mit eigenem Import</p>
+    <nav class="tabs" role="tablist" aria-label="Bereiche">
+      <button type="button" role="tab" data-view="vocab" aria-selected="true">Vokabeln</button>
+      <button type="button" role="tab" data-view="grammar" aria-selected="false">Grammatik</button>
+      <button type="button" role="tab" data-view="data" aria-selected="false">Daten</button>
+    </nav>
+  </header>
+
+  <p class="warn" id="storage-warn" hidden>Der Browser lässt kein Speichern zu. Dein Fortschritt und importierte Daten gehen beim Schließen verloren.</p>
+
+  <!-- Vokabeln -->
+  <section class="view" id="view-vocab">
+    <div class="chips" id="deckchips" role="group" aria-label="Stapel wählen"></div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Richtung">
+        <button type="button" id="dir-a" aria-pressed="true">Wie importiert</button>
+        <button type="button" id="dir-b" aria-pressed="false">Umgekehrt</button>
+      </div>
+      <div class="grp">
+        <button type="button" class="ghost" id="v-shuffle">Mischen</button>
+        <button type="button" class="ghost" id="v-reset">Neu starten</button>
+      </div>
+    </div>
+    <div class="progress">
+      <div class="bar" aria-hidden="true"><span id="v-fill"></span></div>
+      <div class="stats"><span id="v-known"></span><span id="v-left"></span></div>
+    </div>
+    <div id="v-study" class="view">
+      <button type="button" class="card" id="v-card" aria-live="polite">
+        <span class="side" id="v-side"></span>
+        <span class="big" id="v-main"></span>
+        <span class="hint" id="v-hint"></span>
+      </button>
+      <div class="grade">
+        <button type="button" class="again" id="v-again" disabled>Nochmal</button>
+        <button type="button" class="ok" id="v-got" disabled>Gewusst</button>
+      </div>
+      <p class="keys">Leertaste: umdrehen · Pfeil links: nochmal · Pfeil rechts: gewusst</p>
+    </div>
+    <div id="v-finish" class="done" hidden>
+      <h2 id="v-finish-title"></h2>
+      <p class="sub" id="v-finish-text"></p>
+      <button type="button" class="primary" id="v-restart">Von vorn beginnen</button>
+    </div>
+  </section>
+
+  <!-- Grammatik -->
+  <section class="view" id="view-grammar" hidden>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Aufgabenformat">
+        <button type="button" id="gm-mc" aria-pressed="true">Japanisch (Auswahl)</button>
+        <button type="button" id="gm-tr" aria-pressed="false">Deutsch (Übersetzen)</button>
+      </div>
+      <button type="button" class="ghost" id="g-reset">Neu starten</button>
+    </div>
+    <div class="chips" id="patchips" role="group" aria-label="Nur diese Muster üben"></div>
+    <div class="progress">
+      <div class="bar" aria-hidden="true"><span id="g-fill"></span></div>
+      <div class="stats"><span id="g-known"></span><span id="g-left"></span></div>
+    </div>
+
+    <!-- Format: Japanisch, Lückentext mit vier Antworten -->
+    <div id="m-study" class="task" hidden>
+      <p class="prompt jp" id="m-prompt"></p>
+      <div class="opts" id="m-opts"></div>
+      <div class="answer" id="m-answer" hidden>
+        <p class="verdict" id="m-verdict"></p>
+        <p class="note" id="m-note"></p>
+        <div><button type="button" class="primary" id="m-next">Weiter</button></div>
+      </div>
+      <p class="keys">Tasten 1 bis 4: Antwort wählen · Pfeil rechts: weiter</p>
+    </div>
+
+    <!-- Format: Deutsch, selbst übersetzen -->
+    <div id="g-study" class="task" hidden>
+      <p class="prompt" id="g-prompt"></p>
+      <textarea id="g-input" class="jpin" lang="ja" placeholder="Deine Antwort auf Japanisch" aria-label="Deine Antwort auf Japanisch"></textarea>
+      <div><button type="button" class="primary" id="g-show">Lösung zeigen</button></div>
+      <div class="answer" id="g-answer" hidden>
+        <p class="verdict" id="g-verdict"></p>
+        <div><span class="label">Deine Antwort</span><p class="mine" id="g-mine"></p></div>
+        <div><span class="label">Lösung</span><p class="sol" id="g-sol"></p></div>
+        <p class="alt" id="g-alt"></p>
+        <p class="note" id="g-note"></p>
+        <div class="grade">
+          <button type="button" class="again" id="g-again">Nochmal</button>
+          <button type="button" class="ok" id="g-got">Richtig</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="g-finish" class="done" hidden>
+      <h2 id="g-finish-title"></h2>
+      <p class="sub" id="g-finish-text"></p>
+      <button type="button" class="primary" id="g-restart">Von vorn beginnen</button>
+    </div>
+
+    <details id="g-details" hidden>
+      <summary>Hilfe anzeigen</summary>
+      <p id="g-info"></p>
+    </details>
+  </section>
+
+  <!-- Daten -->
+  <section class="view" id="view-data" hidden>
+    <div class="panel">
+      <h2>Vokabeln importieren</h2>
+      <p>CSV-Datei wählen oder Text einfügen. Pro Zeile eine Karte, Spalten durch Tab, Komma oder Semikolon getrennt (UTF-8). Anki-Exporte funktionieren auch.</p>
+      <div class="field"><label for="imp-file">CSV- oder Textdatei</label><input type="file" id="imp-file" accept=".csv,.tsv,.txt,text/plain,text/csv"></div>
+      <div class="field"><label for="imp-text">oder hier einfügen</label><textarea id="imp-text" class="paste" placeholder="to teach,教える (おしえる)"></textarea></div>
+      <div class="fields">
+        <div class="field"><label for="imp-delim">Trennzeichen</label>
+          <select id="imp-delim"><option value="auto">automatisch</option><option value="tab">Tab</option><option value="comma">Komma</option><option value="semi">Semikolon</option></select></div>
+        <div class="field"><label for="imp-col-a">Vorderseite aus</label><select id="imp-col-a"></select></div>
+        <div class="field"><label for="imp-col-b">Rückseite aus</label><select id="imp-col-b"></select></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="imp-header"> Erste Zeile ist eine Kopfzeile</label>
+      <div class="field"><label for="imp-deck">Stapelname (bei vorhandenem Namen werden Karten ergänzt)</label>
+        <input type="text" id="imp-deck" list="deck-names" placeholder="z. B. Lektion 2"><datalist id="deck-names"></datalist></div>
+      <div class="tablewrap"><table id="imp-preview"></table></div>
+      <p class="msg" id="imp-msg" role="status"></p>
+      <div><button type="button" class="primary" id="imp-go">Importieren</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>Auswahlfragen importieren (Japanisch)</h2>
+      <p>Spalten: <b>Muster</b>, <b>Frage</b>, <b>richtige Antwort</b>, <b>falsch 1</b>, <b>falsch 2</b>, <b>falsch 3</b>, <b>Hinweis</b> (optional). Die Lücke schreibst du als （　　　）. Passt der Mustername zu einem vorhandenen, wird die Frage dort einsortiert. Die Antworten werden beim Üben gemischt.</p>
+      <div class="field"><label for="mimp-file">CSV- oder Textdatei</label><input type="file" id="mimp-file" accept=".csv,.tsv,.txt,text/plain,text/csv"></div>
+      <div class="field"><label for="mimp-text">oder hier einfügen</label><textarea id="mimp-text" class="paste" placeholder="～てくる,犬が走って（　　　）。,きた,いった,みた,おいた,Bewegung auf den Sprecher zu"></textarea></div>
+      <div class="fields">
+        <div class="field"><label for="mimp-delim">Trennzeichen</label>
+          <select id="mimp-delim"><option value="auto">automatisch</option><option value="tab">Tab</option><option value="comma">Komma</option><option value="semi">Semikolon</option></select></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mimp-header"> Erste Zeile ist eine Kopfzeile</label>
+      <p class="msg" id="mimp-msg" role="status"></p>
+      <div><button type="button" class="primary" id="mimp-go">Fragen importieren</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>Übersetzungssätze importieren (Deutsch)</h2>
+      <p>Spalten: <b>Muster</b>, <b>Aufgabe</b>, <b>Lösung</b>, <b>Hinweis</b> (optional). Mehrere richtige Lösungen in der dritten Spalte mit | trennen. In der Aufgabe markiert **Text** eine Hervorhebung.</p>
+      <div class="field"><label for="gimp-file">CSV- oder Textdatei</label><input type="file" id="gimp-file" accept=".csv,.tsv,.txt,text/plain,text/csv"></div>
+      <div class="field"><label for="gimp-text">oder hier einfügen</label><textarea id="gimp-text" class="paste" placeholder="～てくる,Mir ist langsam kalt **geworden**.,寒くなってきた。,Veränderung bis jetzt"></textarea></div>
+      <div class="fields">
+        <div class="field"><label for="gimp-delim">Trennzeichen</label>
+          <select id="gimp-delim"><option value="auto">automatisch</option><option value="tab">Tab</option><option value="comma">Komma</option><option value="semi">Semikolon</option></select></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="gimp-header"> Erste Zeile ist eine Kopfzeile</label>
+      <p class="msg" id="gimp-msg" role="status"></p>
+      <div><button type="button" class="primary" id="gimp-go">Sätze importieren</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>Stapel und Sicherung</h2>
+      <div class="decks" id="decklist"></div>
+      <div class="row">
+        <div class="grp">
+          <button type="button" class="ghost" id="exp-all">Alle Vokabeln als CSV</button>
+          <button type="button" class="ghost" id="exp-mc">Auswahlfragen als CSV</button>
+          <button type="button" class="ghost" id="exp-gram">Übersetzungssätze als CSV</button>
+        </div>
+      </div>
+      <p class="msg" id="data-msg" role="status"></p>
+      <textarea id="export-out" class="paste" readonly hidden aria-label="Exportierte CSV zum Kopieren"></textarea>
+      <div class="row">
+        <div class="grp">
+          <button type="button" class="ghost" id="reset-progress">Fortschritt zurücksetzen</button>
+          <button type="button" class="ghost danger" id="reset-all">Alles auf Standard zurücksetzen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="data/standarddaten.js"></script>
+<script src="app.js"></script>
+<script>
+  // Offline-Fähigkeit: nur über http(s), nicht beim direkten Öffnen der Datei.
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  }
+</script>
+</body>
+</html>
